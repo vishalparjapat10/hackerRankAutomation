@@ -47,6 +47,25 @@ browserOpenPromise.then(function(browser){
     return algorithmTabWillBeOpenedPromise;
 }).then(function(){
     console.log("Algorithm pages is opened");
+    let allQuesPromise = cTab.waitForSelector('a[data-analytics="ChallengeListChallengeName"]');
+    return allQuesPromise;
+}).then(function(){
+    function getAllQuesLinks(){
+        let allElemArr = document.querySelectorAll('a[data-analytics="ChallengeListChallengeName"]');
+        let linksArr = [];
+        for(let i = 0;i < allElemArr.length;i++){
+            linksArr.push(allElemArr[i].getAttribute("href"));
+        }
+        return linksArr;
+    }
+
+    // .evaluate will execute the above function in the current tab because we want to execute here in current tab
+    let linksArrPromise = cTab.evaluate(getAllQuesLinks);
+    return linksArrPromise;
+    
+}).then(function(linksArr){
+    console.log("linsk to all questions received");
+    console.log(linksArr);
 })
 .catch(function(err){
     console.log(err);
@@ -61,7 +80,7 @@ function waitAndClick(algoBtn){
             return clickPromise;
         }).then(function (){
             console.log("algo button is clicked");
-            // resolve();
+            resolve(); 
         })
         .catch(function (err){
             console.log(err);
