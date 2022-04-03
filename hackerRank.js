@@ -39,7 +39,33 @@ browserOpenPromise.then(function(browser){
    
 }).then(function(){
     console.log("Logged In");
+    // let algorithmTabWillBeOpenedPromise = cTab.click('div[data-automation="algorithms"]');// sometimes a certain page or tab takes time to load and in the meantime it searches for the given selector and don't wait to relaod the page and then doesn't find the given selector and give error.
+    // So to overcome above problem we do the following
+
+    // waitAndClick will wait for the entire webPage or selector to load, and then it will find the needed node and then click the button/element
+    let algorithmTabWillBeOpenedPromise = waitAndClick('div[data-automation="algorithms"]');
+    return algorithmTabWillBeOpenedPromise;
+}).then(function(){
+    console.log("Algorithm pages is opened");
 })
 .catch(function(err){
     console.log(err);
 });
+
+function waitAndClick(algoBtn){
+    let myPromise = new Promise(function(resolve,reject){
+        let waitForSelectorPromise = cTab.waitForSelector(algoBtn);// it is an inbult function whoch will wait and find the selector,if it is find then the promise will be fullfilled
+        waitForSelectorPromise.then(function(){
+            console.log("algo button is found");
+            let clickPromise = cTab.click(algoBtn);
+            return clickPromise;
+        }).then(function (){
+            console.log("algo button is clicked");
+            // resolve();
+        })
+        .catch(function (err){
+            console.log(err);
+        })
+    })
+    return myPromise;
+}
