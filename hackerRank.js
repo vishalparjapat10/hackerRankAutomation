@@ -61,16 +61,21 @@ browserOpenPromise.then(function(browser){
     }
 
     // .evaluate will execute the above function in the current tab because we want to execute here in current tab
-    let linksArrPromise = cTab.evaluate(getAllQuesLinks);
+    let linksArrPromise = cTab.evaluate(getAllQuesLinks);// evauluate also returns a promise
     return linksArrPromise;
     
 }).then(function(linksArr){
     console.log("linsk to all questions received");
     console.log(linksArr);
 
-    let questionsWillBeSolvedPromise = questionSolver(linksArr[0],0);// link to the question to be solved,idx of the linksArr
+    let questionWillBeSolvedPromise = questionSolver(linksArr[0],0);// link to the question to be solved,idx of the linksArr
+    for (let i = 1; i < linksArr.length; i++){
+        questionWillBeSolvedPromise = questionWillBeSolvedPromise.then(function () {
+          return questionSolver(linksArr[i], i);
+        })
+      }
 
-    return questionsWillBeSolvedPromise;
+    return questionWillBeSolvedPromise;
 }).then(function(){
     console.log("questions is solved");
 })
@@ -96,67 +101,80 @@ function waitAndClick(algoBtn){
     return myPromise;
 }
 
-function questionSolver(url,idx){
-
-    return new Promise(function(resolve,reject){
-        let fullLink = `https://www.hackerrank.com${url}`;
-        let goToQuesPagePromise = cTab.goto(fullLink);
-        goToQuesPagePromise.then(function(){
-            console.log("question opened");
-            // steps to solve a question :-
-            // 1. tick the custom input puppeteer.BrowserContext(CIB)
-            // 2. type the code in CIB
-            // 3. ctrl + a code from CIB
-            // 4. ctrl+x code from CIB
-            // 5. select editor
-            // 6. ctrl + a editor
-            // 7. ctrl + v editor -> code paste
-            // 8. Run code btn click 
-
-            // tick the custome input mark
-            let waitForCheckBoxAndClickPromise = waitAndClick(".checkbox-input");
-            return waitForCheckBoxAndClickPromise;
-        }).then(function(){
-            // select the box CIB to type the code
-            let waitForTExtBoxPromise = cTab.waitForSelector(".custominput");
-            return waitForTExtBoxPromise;
-        }).then(function(){
-            let codeWillBeTypedPromise = cTab.type(".custominput",answer[idx]);
-            return codeWillBeTypedPromise;
-        }).then(function(){
-            // select all code from box(CIB)
-            // control key is pressed from keyboard
-            let controlPressedPromise = cTab.keyboard.press("Control");
-            return controlPressedPromise;
-        }).then(function(){
-            let aKeyPressedPromise = cTab.keyboard.press("a");
-            return aKeyPressedPromise;
-        }).then(function(){
-            let xKeyPressedPromise = cTab.keyboard.press("x");
-            return xKeyPressedPromise;
-        }).then(function(){
-            // select editor
-            let cursorOnEditorPromise = cTab.click('.monaco-editor.no-user-select.vs')
-        }).then(function(){
-            // control + a,control is already being pressed, so we will press only a
-            let aKeyPressedPromise = cTab.keyboard.press("a");
-            return aKeyPressedPromise;
-        }).then(function(){
-            let vKeyPressedPromise = cTab.keyboard.press("v");
-            return vKeyPressedPromise;
-        }).then(function(){
-            let submitButtonClickedPromise = cTab.click('.hr-monaco-submit');
-            return submitButtonClickedPromise;
-        }).then(function(){
-            let controlDownPromise = cTab.keyboard.up("Control");
-            return controlDownPromise;
-        }).then(function(){
-            console.log("Code submitted successfully");
-            resolve();
+function questionSolver(url, idx) {
+    return new Promise(function (resolve, reject) {
+      let fullLink = `https://www.hackerrank.com${url}`;
+      let goToQuesPagePromise = cTab.goto(fullLink);
+      goToQuesPagePromise
+        .then(function () {
+          console.log("question opened");
+          //tick the custom input box mark
+          let waitForCheckBoxAndClickPromise = waitAndClick(".checkbox-input");
+          return waitForCheckBoxAndClickPromise;
         })
-        .catch(function(err){
-            reject(err);
+        .then(function () {
+          //select the box where code will be typed
+          let waitForTextBoxPromise = cTab.waitForSelector(".custominput");
+          return waitForTextBoxPromise;
         })
+        .then(function () {
+          let codeWillBeTypedPromise = cTab.type(".custominput", answer[idx], {
+            delay: 100,
+          });
+          return codeWillBeTypedPromise;
+        })
+        .then(function () {
+          //control key is pressed promise
+          let controlPressedPromise = cTab.keyboard.down("Control");
+          return controlPressedPromise;
+        })
+        .then(function () {
+          let aKeyPressedPromise = cTab.keyboard.press("a");
+          return aKeyPressedPromise;
+        })
+        .then(function () {
+          let xKeyPressedPromise = cTab.keyboard.press("x");
+          return xKeyPressedPromise;
+        })
+        .then(function () {
+          let ctrlIsReleasedPromise = cTab.keyboard.up("Control");
+          return ctrlIsReleasedPromise;
+        })
+        .then(function () {
+          //select the editor promise
+          let cursorOnEditorPromise = cTab.click(
+            ".monaco-editor.no-user-select.vs"
+          );
+          return cursorOnEditorPromise;
+        })
+        .then(function () {
+          //control key is pressed promise
+          let controlPressedPromise = cTab.keyboard.down("Control");
+          return controlPressedPromise;
+        })
+        .then(function () {
+          let aKeyPressedPromise = cTab.keyboard.press("A");
+          return aKeyPressedPromise;
+        })
+        .then(function () {
+          let vKeyPressedPromise = cTab.keyboard.press("V");
+          return vKeyPressedPromise;
+        })
+        .then(function () {
+          let controlDownPromise = cTab.keyboard.up("Control");
+          return controlDownPromise;
+        })
+        .then(function () {
+          let submitButtonClickedPromise = cTab.click(".hr-monaco-submit");
+          return submitButtonClickedPromise;
+        })
+        .then(function () {
+          console.log("code submitted successfully");
+          resolve();
+        })
+        .catch(function (err) {
+          reject(err);
+        });
     });
+  }
   
-}
